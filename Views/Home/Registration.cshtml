@@ -42,7 +42,7 @@
                         <label class="form-label" style="visibility: hidden;">.</label>
                         <div class="row gutters-xs">
                             <div class="col">
-                                <button class="btn btn-primary" title="Verify" data-toggle="tooltip" data-placement="bottom" onclick="VerifyEmail()"><i class="fa fa-search"></i></button>
+                                <button class="btn btn-warning" id="VerifyEmail" title="Verify" data-toggle="tooltip" data-placement="bottom" onclick="VerifyEmail()"><i class="fa fa-search text-white"></i></button>
                             </div>
                         </div>
                     </div>
@@ -52,7 +52,7 @@
                         <label class="form-label" style="visibility: hidden;">.</label>
                         <div class="row gutters-xs">
                             <div class="col">
-                                <button class="btn btn-primary" title="Verify" data-toggle="tooltip" data-placement="bottom" onclick="VerifyOTP()"><i class="fa fa-check-circle"></i></button>
+                                <button class="btn btn-success" id="VerifyOTP" title="Verify" data-toggle="tooltip" data-placement="bottom" onclick="VerifyOTP()"><i class="fa fa-check-circle"></i></button>
                             </div>
                         </div>
                     </div>
@@ -116,7 +116,7 @@
                         <label class="form-label">Contact No</label>
                         <div class="row gutters-xs">
                             <div class="col">
-                                <input type="text" class="form-control number" id="ContactNo" placeholder="Contact No" />
+                                <input type="text" class="form-control number" id="ContactNo" placeholder="Contact No" maxlength="10" />
                             </div>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-3 col-sm-12">
-                    <button class="btn btn-success" title="Save" data-toggle="tooltip" data-placement="bottom" onclick="Save()"><i class="fa fa-save"></i></button>
+                    <button class="btn btn-success" id="Save" title="Save" data-toggle="tooltip" data-placement="bottom" onclick="Save()" disabled><i class="fa fa-save"></i></button>
                 </div>
             </div>
         </div>
@@ -212,8 +212,6 @@
     }
 
     function VerifyEmail() {
-        var OTP = GenerateOTP();
-
         var Email = $("#Email").val();
         if (Email == "") {
             $('#Email').addClass("is-invalid");
@@ -227,6 +225,7 @@
         else {
             $('#Email').removeClass("is-invalid");
 
+            var OTP = GenerateOTP();
             var Message = "Hello, OTP for registration is " + OTP + "";
 
             var data = { "Email": Email, "OTP": OTP, "Message": Message };
@@ -250,6 +249,67 @@
         }
     }
 
+    function VerifyOTP() {
+        var Email = $("#Email").val();
+        var OTP = $("#OTP").val();
+
+        if (Email == "") {
+            $('#Email').addClass("is-invalid");
+            Swal.fire({
+                title: 'Error',
+                text: "Please enter email!",
+                icon: 'error'
+            });
+            return false;
+        }
+        else if (OTP == "") {
+            $('#OTP').addClass("is-invalid");
+            Swal.fire({
+                title: 'Error',
+                text: "Please enter otp!",
+                icon: 'error'
+            });
+            return false;
+        }
+        else {
+            $('#OTP').removeClass("is-invalid");
+
+            var data = { "Email": Email, "OTP": OTP };
+            data = JSON.stringify(data);
+
+            $.ajax({
+                type: 'POST',
+                url: '/Home/VerifyOTP',
+                data: data,
+                contentType: 'application/json; charset=utf-8',
+                success: function (response) {
+                    if (response.Status != 0) {
+                        $(".show").hide();
+                        $(".hide").show();
+                        $("#Email").prop("readonly", true);
+                        $("#VerifyEmail").prop("disabled", true);
+                        $("#Save").prop("disabled", false);
+                        Swal.fire({
+                            title: 'Success',
+                            text: response.Message,
+                            icon: 'success'
+                        });
+                    }
+                    else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: response.Message,
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function (error) {
+                    alert(error.responseText);
+                }
+            });
+        }
+    }
+
     function Save() {
         var Check = true;
         var element = {};
@@ -264,6 +324,15 @@
         element.State = $("#State").val();
         element.City = $("#City").val();
         element.PinCode = $("#PinCode").val();
+
+        if (document.getElementById("Email").readOnly != true) {
+            Swal.fire({
+                title: 'Error',
+                text: "Please verfiy email!",
+                icon: 'error'
+            });
+            return false;
+        }
 
         if (element.Email == "") {
             $('#Email').addClass("is-invalid");

@@ -1,0 +1,190 @@
+﻿<div>
+    <div class="modal-header">
+        <h5 class="modal-title">Attachments</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <div class="form-group">
+                <input type="file" id="AttachmentFile" name="PostedFile" />
+                <input type="button" class="btn btn-primary" id="Upload" title="Upload" data-toggle="tooltip" data-placement="bottom" value="Upload" />
+            </div>
+            <div class="form-group">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="AttachmentTable" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Download</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-info pull-right" data-bs-dismiss="modal" aria-label="Close">Done</button>
+    </div>
+</div>
+
+@using (Html.BeginForm("DownloadAttachment", "Master", FormMethod.Post))
+{
+    <input type="hidden" id="HiddenFile" name="Id" />
+    <button type="submit" class="btn btn-primary" id="Download" style="display:none">Download</button>
+}
+
+<script>
+    $(document).ready(function () {
+        $("#AttachmentTable").DataTable({
+            destroy: true,
+            lengthChange: false,
+        });
+
+        Attachments = Attachments;
+
+        if (table.length != 0) {
+            UploadAttachmentTable();
+        }
+    });
+
+    function UploadAttachmentTable() {
+        $("#AttachmentTable").dataTable({
+            destroy: true,
+            lengthChange: false,
+            aaData: Attachments,
+            columns: [
+                { "data": "DocName" },
+                {
+                    "data": "FilePath",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<div class="text-center"><a class="btn btn-primary" onclick="DownloadAttachment(' + row.RunningNo + ')"><i class="fa fa-download"></i></a></div>';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    "data": "FilePath",
+                    "render": function (data, type, row, meta) {
+                        if (type === 'display') {
+                            data = '<div class="text-center"><a class="btn btn-danger" onclick="DeleteAttachment(' + row.RunningNo + ')"><i class="fa fa-trash"></i></a></div>';
+                        }
+                        return data;
+                    }
+                }
+            ]
+        });
+        Count();
+    }
+
+    $("#Upload").on('click', function () {
+        Upload();
+    });
+
+    function Upload() {
+        var fileUpload = $("#AttachmentFile").get(0);
+        var files = fileUpload.files;
+        var fileData = new FormData();
+
+        if (files.length == 0) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Please select file!',
+                icon: 'error'
+            });
+            return false;
+        }
+
+        var iSize = document.getElementById('AttachmentFile').files[0].size / 1024
+        iSize = (Math.round((iSize / 1024) * 100) / 100)
+
+        if (iSize > 25) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Selected file size more than 25 MB!',
+                icon: 'error'
+            });
+            return false;
+        }
+
+        for (var i = 0; i < files.length; i++) {
+            fileData.append(files[i].name, files[i]);
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '/Master/UploadAttachment',
+            data: fileData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                RunningNo++;
+
+                var element = {};
+                element.RunningNo = RunningNo;
+                element.Type = Type;
+                element.DocName = response.DocName;
+                element.FilePath = response.FilePath;
+                element.ContentType = response.ContentType;
+                Attachments.push(element);
+
+                UploadAttachmentTable();
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        });
+
+        $("#AttachmentFile").val('');
+    }
+
+    function DownloadAttachment(RunningNo) {
+        var DocName, FilePath, ContentType;
+        for (i = 0; i < Attachments.length; i++) {
+            if (Attachments[i].RunningNo == RunningNo) {
+                DocName = Attachments[i].DocName;
+                FilePath = Attachments[i].FilePath;
+                ContentType = Attachments[i].ContentType;
+            }
+        }
+        var Id = 0;
+        var data = { "DocName": DocName, "FilePath": FilePath, "ContentType": ContentType }
+        data = JSON.stringify(data);
+
+        $.ajax({
+            type: 'POST',
+            url: '/Master/StoreAttachment',
+            data: data,
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                Id = response;
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        });
+        $("#HiddenFile").val(Id);
+        $("#Download")[0].click();
+    }
+
+    function DeleteAttachment(RunningNo) {
+        var r = confirm("Are you sure want to delete this file!");
+        if (r == true) {
+            for (i = 0; i < Attachments.length; i++) {
+                if (Attachments[i].RunningNo == RunningNo) {
+                    Attachments.splice(i, 1);
+                }
+            }
+
+            UploadAttachmentTable();
+        }
+    }
+
+    function Count() {
+        var table = $("#AttachmentTable").DataTable();
+        var Count = table.rows().count();
+        document.getElementById("Count").innerHTML = Count;
+    }
+</script>

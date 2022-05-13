@@ -25,19 +25,19 @@
                                 @Html.EditorFor(model => model.Password, new { htmlAttributes = new { type = "Password", @class = "form-control", @id = "Password", name = "Password", placeholder = "Password", autocomplete = "off" } })
                             </div>
                             <div class="mb-3 form-check">
-                                @Html.EditorFor(model => model.RememberMe, new { htmlAttributes = new { type = "checkbox", @class = "custom-control-input", @id = "rememberMe", name = "rememberMe", autocomplete = "off" } })
+                                @Html.EditorFor(model => model.RememberMe, new { htmlAttributes = new { type = "checkbox", @class = "form-check-input", @id = "RememberMe", name = "RememberMe" } })
                                 <label class="form-check-label">Remember Me</label>
                             </div>
                             <span class="text-danger">@Html.DisplayFor(model => model.ErrorMessage)</span>
                             <div class="d-flex justify-content-between">
-                                <button type="submit" class="btn btn-primary">Login</button>
+                                <button type="submit" class="btn btn-primary" title="Login" data-toggle="tooltip" data-placement="bottom">Login</button>
                                 @Html.ActionLink("Register", "Registration", "Home")
                             </div>
                         </form>
                     </div>
                 </div>
                 <div class="card d-flex justify-content-center p-3 bg-warning">
-                    <h1 class="text-center fw-bolder">Glass Pro</h1>
+                    <h1 class="text-center text-white fw-bolder">Glass Pro</h1>
                 </div>
             </div>
         </div>

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace MyApp.Models
+﻿namespace MyApp.Models
 {
     public class ProductionModel
     {

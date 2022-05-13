@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Web;
 
 namespace MyApp.Models
 {
@@ -416,25 +414,41 @@ namespace MyApp.Models
             return dataTable;
         }
 
-        public static bool SendEmail(string Email, int OTP, string Message)
+        public static bool SendEmail(string EmailId, int OTP, string Message)
         {
             bool IsSent = false;
             try
             {
-                if (Email != "")
+                string Email = "";
+                string Password = "";
+                string Host = "";
+                int Port = 0;
+                DataTable dataTable = new DataTable();
+                dataTable = GetDataTable("USP_Email");
+                if (dataTable.Rows.Count > 0)
                 {
-                    using (MailMessage mail = new MailMessage("abhishek.naik24082000@gmail.com", Email))
+                    foreach (DataRow row in dataTable.Rows)
+                    {
+                        Email = Convert.ToString(row["Email"]);
+                        Password = Convert.ToString(row["Password"]);
+                        Host = Convert.ToString(row["Host"]);
+                        Port = Convert.ToInt32(row["Port"]);
+                    }
+                }
+                if (EmailId != "")
+                {
+                    using (MailMessage mail = new MailMessage(Email, EmailId))
                     {
                         mail.Subject = "Login Credentials";
                         mail.Body = Message;
                         mail.IsBodyHtml = true;
                         SmtpClient smtp = new SmtpClient();
-                        smtp.Host = "smtp.gmail.com";
+                        smtp.Host = Host;
                         smtp.EnableSsl = true;
-                        NetworkCredential networkCredential = new NetworkCredential("abhishek.naik24082000@gmail.com", "abhishek@2000");
+                        NetworkCredential networkCredential = new NetworkCredential(Email, Password);
                         smtp.UseDefaultCredentials = false;
                         smtp.Credentials = networkCredential;
-                        smtp.Port = 587;
+                        smtp.Port = Port;
                         smtp.Send(mail);
                         IsSent = true;
                     }
@@ -445,6 +459,94 @@ namespace MyApp.Models
             {
                 throw ex;
             }
+        }
+
+        public static DataTable SaveAttchment(string InvoiceNo, DataTable data)
+        {
+            SqlConnection connection = new SqlConnection();
+            DataTable dataTable = new DataTable();
+            try
+            {
+                DBConnection dBConnection = new DBConnection();
+                connection = dBConnection.GetConnection;
+                if (connection.State != System.Data.ConnectionState.Open)
+                {
+                    connection.Open();
+                }
+                SqlCommand sqlCommand = new SqlCommand("USP_SaveAttachment", connection);
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.Parameters.AddWithValue("@InvoiceNo", InvoiceNo);
+
+                if (data != null)
+                {
+                    SqlParameter sqlParameter = new SqlParameter();
+                    sqlParameter.ParameterName = "@PT_Attachment";
+                    sqlParameter.Value = data;
+                    sqlParameter.TypeName = "PT_Attachment";
+                    sqlParameter.SqlDbType = SqlDbType.Structured;
+                    sqlCommand.Parameters.Add(sqlParameter);
+                }
+                SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
+                sqlDataAdapter.SelectCommand = sqlCommand;
+                sqlDataAdapter.Fill(dataTable);
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+                throw ex;
+            }
+            return dataTable;
+        }
+
+        public static DataTable SaveItem(int UserId, DataTable data)
+        {
+            SqlConnection connection = new SqlConnection();
+            DataTable dataTable = new DataTable();
+            try
+            {
+                DBConnection dBConnection = new DBConnection();
+                connection = dBConnection.GetConnection;
+                if (connection.State != System.Data.ConnectionState.Open)
+                {
+                    connection.Open();
+                }
+                SqlCommand sqlCommand = new SqlCommand("USP_SaveMultipleItems", connection);
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.Parameters.AddWithValue("@UserId", UserId);
+
+                if (data != null)
+                {
+                    SqlParameter sqlParameter = new SqlParameter();
+                    sqlParameter.ParameterName = "@PT_Item";
+                    sqlParameter.Value = data;
+                    sqlParameter.TypeName = "PT_Item";
+                    sqlParameter.SqlDbType = SqlDbType.Structured;
+                    sqlCommand.Parameters.Add(sqlParameter);
+                }
+                SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
+                sqlDataAdapter.SelectCommand = sqlCommand;
+                sqlDataAdapter.Fill(dataTable);
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
+                throw ex;
+            }
+            return dataTable;
         }
     }
 }

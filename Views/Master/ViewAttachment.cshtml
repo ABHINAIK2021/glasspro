@@ -1,0 +1,84 @@
+﻿<div>
+    <div class="modal-header">
+        <h5 class="modal-title">Attachments</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <div class="form-group">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="AttachmentTable" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Download</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-info pull-right" data-bs-dismiss="modal" aria-label="Close">Done</button>
+    </div>
+</div>
+
+@using (Html.BeginForm("DownloadAttachment", "Master", FormMethod.Post))
+{
+    <input type="hidden" id="HiddenFile" name="Id" />
+    <button type="submit" class="btn btn-primary" id="Download" style="display:none">Download</button>
+}
+
+<script>
+    $(document).ready(function () {
+        if (MasterAttachments.length != 0) {
+            $("#AttachmentTable").dataTable({
+                destroy: true,
+                lengthChange: false,
+                aaData: MasterAttachments,
+                columns: [
+                    { "data": "DocName" },
+                    {
+                        "data": "FilePath",
+                        "render": function (data, type, row, meta) {
+                            if (type === 'display') {
+                                data = '<div class="text-center"><a class="btn btn-primary" onclick="DownloadAttachment(' + row.RunningNo + ')"><i class="fa fa-download"></i></a></div>';
+                            }
+                            return data;
+                        }
+                    }
+                ]
+            });
+        }
+    });
+
+    function DownloadAttachment(RunningNo) {
+        var DocName, FilePath, ContentType;
+        for (i = 0; i < MasterAttachments.length; i++) {
+            if (MasterAttachments[i].RunningNo == RunningNo) {
+                DocName = MasterAttachments[i].DocName;
+                FilePath = MasterAttachments[i].FilePath;
+                ContentType = MasterAttachments[i].ContentType;
+            }
+        }
+        var Id = 0;
+        var data = { "DocName": DocName, "FilePath": FilePath, "ContentType": ContentType }
+        data = JSON.stringify(data);
+
+        $.ajax({
+            type: 'POST',
+            url: '/Master/StoreAttachment',
+            data: data,
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                Id = response;
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        });
+        $("#HiddenFile").val(Id);
+        $("#Download")[0].click();
+    }
+</script>

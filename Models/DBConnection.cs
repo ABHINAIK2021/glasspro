@@ -1,5 +1,4 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Data.SqlClient;
 
 namespace MyApp.Models
@@ -15,7 +14,7 @@ namespace MyApp.Models
 
         public DBConnection()
         {
-            String ConnectionString = ConfigurationManager.ConnectionStrings["DefualtConnectionString"].ConnectionString;
+            string ConnectionString = ConfigurationManager.ConnectionStrings["DefualtConnectionString"].ConnectionString;
             SqlConn = new SqlConnection(ConnectionString);
         }
     }

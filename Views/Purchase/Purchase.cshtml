@@ -185,7 +185,19 @@
                 </div>
             </div>
             <div class="row mt-1">
-                <div class="offset-9 col-lg-3 col-sm-12">
+                <div class="col-lg-3 col-sm-12">
+                    <div class="form-group">
+                        <div class="row gutters-xs">
+                            <div class="col">
+                                <button class="btn btn-light" title="Upload" data-toggle="tooltip" data-placement="bottom" onclick="Attachment()">
+                                    <i class="fa fa-paperclip fa-2x"></i>
+                                    <span class="custom-switch-description" style="font-size:17px;color:#6c4cbb"><b><span id="Count">0</span></b></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="offset-6 col-lg-3 col-sm-12">
                     <div class="form-group">
                         <label class="form-label">Net Total</label>
                         <div class="row gutters-xs">
@@ -217,8 +229,19 @@
     </div>
 </div>
 
+<div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content" id="ModalContent"></div>
+    </div>
+</div>
+
 <script>
     var Items = [];
+    var RunningNo = 0;
+    var Type = 'Purchase';
+    var Attachments = [];
+    var TotalAttchments = [];
+    var MasterAttachments = [];
 
     $(document).ready(function () {
         $("#tblItem").DataTable({
@@ -416,6 +439,21 @@
         }
     }
 
+    function Attachment() {
+        $.ajax({
+            type: 'POST',
+            url: '/Master/Attachment',
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                $('#ModalContent').html(response);
+                $('#Modal').modal('show');
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        })
+    }
+
     function Save() {
         var Check = true;
         var PurchaseDate = $("#PurchaseDate").val();
@@ -456,7 +494,16 @@
             return false;
         }
 
-        var data = { "PurchaseDate": PurchaseDate, "NetTotal": NetTotal, "GrandTotal": GrandTotal, "Items": Items };
+        for (var i = 0; i < Attachments.length; i++) {
+            var element = {};
+            element.Type = Attachments[i].Type;
+            element.DocName = Attachments[i].DocName;
+            element.FilePath = Attachments[i].FilePath;
+            element.ContentType = Attachments[i].ContentType;
+            TotalAttchments.push(element);
+        }
+
+        var data = { "PurchaseDate": PurchaseDate, "NetTotal": NetTotal, "GrandTotal": GrandTotal, "Items": Items, "Attchments": TotalAttchments };
         data = JSON.stringify(data);
 
         $.ajax({
@@ -485,5 +532,51 @@
                 alert(error.responseText);
             }
         });
+    }
+
+    function View(InvoiceNo) {
+        MasterAttachments = [];
+
+        var data = { "InvoiceNo": InvoiceNo };
+        data = JSON.stringify(data);
+
+        $.ajax({
+            type: 'POST',
+            url: '/Master/GetAttachment',
+            data: data,
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                if (response.length != 0) {
+                    for (var i = 0; i < response.length; i++) {
+                        var element = {};
+                        element.RunningNo = i;
+                        element.Type = response[i].Type;
+                        element.DocName = response[i].DocName;
+                        element.FilePath = response[i].FilePath;
+                        element.ContentType = response[i].ContentType;
+                        MasterAttachments.push(element);
+                        ViewAttachment();
+                    }
+                }
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        });
+    }
+
+    function ViewAttachment() {
+        $.ajax({
+            type: 'POST',
+            url: '/Master/ViewAttachment',
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                $('#ModalContent').html(response);
+                $('#Modal').modal('show');
+            },
+            error: function (error) {
+                alert(error.responseText);
+            }
+        })
     }
 </script>
